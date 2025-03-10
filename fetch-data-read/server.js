@@ -1,48 +1,24 @@
-require('dotenv').config();
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const bodyParser = require('body-parser');
+const express = require("express");
+const dotenv = require("dotenv");
+const cors = require("cors");
+const connectDB = require("./config/db");
+
+dotenv.config(); // Load environment variables
+
+connectDB(); // Connect to MongoDB
 
 const app = express();
-app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json()); // Enable JSON parsing
+app.use(cors()); // Enable CORS
+const userRoutes = require("./routes/userRoutes");
+app.use("/api/users", userRoutes);
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB Connected"))
-  .catch(err => console.error("MongoDB Connection Error:", err));
-
-// Define Schema
-const userSchema = new mongoose.Schema({
-  name: String,
-  phone: String,
+app.get("/", (req, res) => {
+    res.send("API is running...");
 });
 
-const User = mongoose.model("User", userSchema);
+const PORT = process.env.PORT || 5000;
 
-// Add user (POST API)
-app.post('/users', async (req, res) => {
-  try {
-    const { name, phone } = req.body;
-    const newUser = new User({ name, phone });
-    await newUser.save();
-    res.status(201).json({ message: "User added successfully!", user: newUser });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Get all users (GET API)
-app.get('/users', async (req, res) => {
-  try {
-    const users = await User.find();
-    res.json(users);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.listen(5000, () => {
-  console.log("Server running on port 5000");
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });
